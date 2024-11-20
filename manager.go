@@ -202,6 +202,23 @@ func (t *TaskManager_t) DeleteTask(taskName string) error {
 	return changeOperation(t, taskName, OPERATION_DELETE)
 }
 
+func (t *TaskManager_t) DeleteAllTask() error {
+	taskInfo, err := getTaskInfoFromRequstCh(t, "", true)
+	if err != nil {
+		return err
+	}
+
+	err = nil
+	for _, v := range taskInfo {
+		err = t.DeleteTask(v.taskName)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (t *TaskManager_t) RunTask(taskName string) error {
 	return changeOperation(t, taskName, OPERATION_START)
 }
@@ -210,19 +227,30 @@ func (t *TaskManager_t) StopTask(taskName string) error {
 	return changeOperation(t, taskName, OPERATION_STOP)
 }
 
-func (t *TaskManager_t) StopAllTask() {
-	for _, v := range t.tasks {
-		t.StopTask(v.taskName)
+func (t *TaskManager_t) StopAllTask() error {
+	taskInfo, err := getTaskInfoFromRequstCh(t, "", true)
+	if err != nil {
+		return err
 	}
+
+	err = nil
+	for _, v := range taskInfo {
+		err = t.StopTask(v.taskName)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (t *TaskManager_t) RestartTask(taskName string) error {
 	return changeOperation(t, taskName, OPERATION_RESTART)
 }
 
-func (t *TaskManager_t) StopTaskManager(waitMsg bool) {
-	t.sendMsg("TaskManager stopped", nil)
-
+func (t *TaskManager_t) CloseTaskManager(waitMsg bool) {
+	t.sendMsg("TaskManager close", nil)
+	t.DeleteAllTask()
 	t.cancel()
 
 	if waitMsg {
